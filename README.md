@@ -1,9 +1,12 @@
-- 👋 Hi, I’m @lopperman, also known on Reddit as u/ITFuture.  You can call me Paul. 
-- I used to be a C# Dev.  I now manage delivery of software by keeping the team members happy, and delivering early and often to the clients. 
-- 👀 I’d picked up VBA about two years ago. I'm very impressed with the language. Check out some of the fully functional demos with source in my just-VBA project. 
-- 🌱 I’m currently Power Apps for fun, and alsready built an app at work. 
+Hi, I’m Paul Brower - @lopperman on GitHub, u/ITFuture on Reddit.
+Short Bio:
+ - C# Developer for 20 years
+ - Work now as a Delivery Lead for @WWT
+ - Started looking at VBA in 2020 - curiosity to see what type of commercial tool could be built with 'that old thing' - ended up building a tool that's been used at work for over 2 years.
+- 👀 Check out some of the fully functional demos with source in my just-VBA project. 
+- Frequent contributor to /r/VBA https://www.reddit.com/user/ITFuture/submitted/
+- 🌱 I’m experimenting with Power Apps for fun, and already built a canvas app at work. 
 - 💞️ I’m interested in someone to collaborate with me on my 'CopyRight' VBA library. 
-- 📫 How to reach me drop a comment here somewhere or DM ITFuture on Reddit
 
 <!---
 lopperman/lopperman is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
