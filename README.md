@@ -1,6 +1,14 @@
-###  Paul Brower / @lopperman on GitHub [u/ITFuture](https://www.reddit.com/user/ITFuture/submitted/) on Reddit
 
+---
+
+####  Paul Brower / @lopperman on GitHub [u/ITFuture](https://www.reddit.com/user/ITFuture/submitted/) on Reddit
+
+---
+:llama: :llama: :llama:
+---
  - Currently working for [World Wide Technology](https://www.wwt.com/)
+
+
 
 <!---
 lopperman/lopperman is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
