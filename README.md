@@ -15,6 +15,7 @@ Currently working for [World Wide Technology](https://www.wwt.com/)
 
 ---
 
+[![Paul Brower's GitHub stats](https://github-readme-stats.vercel.app/api?username=lopperman&hide_rank=true&theme=bear)](https://github.com/anuraghazra/github-readme-stats)
 
 <!---
 
