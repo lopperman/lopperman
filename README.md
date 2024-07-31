@@ -5,6 +5,8 @@
  
 Currently working for [World Wide Technology](https://www.wwt.com/)
 
+My [VBA code](https://github.com/lopperman/just-VBA/wiki), which often includes a working demo file, is 100% MAC and PC compatible.
+
 ---
 <p align="center">
  :llama: :llama:
