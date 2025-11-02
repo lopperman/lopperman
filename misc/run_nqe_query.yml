@@ -1,0 +1,192 @@
+---
+- name: Run NQE Query via Forward Networks API
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # Forward Networks API configuration
+    nqe_base_url: "https://fwd.app"
+
+    # Proxy configuration
+    http_proxy: "http://hostproxy.es.oneadp.com:8080"
+    https_proxy: "http://hostproxy.es.oneadp.com:8080"
+
+    # default values (can be overridden via extra_vars)
+    default_page_size: 5000
+    default_max_records: 250000
+    default_save_results: true
+
+    # Forward Networks API credentials from environment
+    fn_username: "{{ lookup('env', 'FN_API_KEY') }}"
+    fn_password: "{{ lookup('env', 'FN_API_SECRET') }}"
+
+  environment:
+    http_proxy: "{{ http_proxy }}"
+    https_proxy: "{{ https_proxy }}"
+    HTTP_PROXY: "{{ http_proxy }}"
+    HTTPS_PROXY: "{{ https_proxy }}"
+
+  tasks:
+    - name: Set default values for optional variables
+      ansible.builtin.set_fact:
+        snapshot_id: "{{ snapshot_id | default('') }}"
+        page_size: "{{ page_size | default(default_page_size) }}"
+        max_records: "{{ max_records | default(default_max_records) }}"
+        save_results: "{{ save_results | default(default_save_results) }}"
+
+    - name: Build output filename
+      ansible.builtin.set_fact:
+        output_file: "{{ output_file | default('/tmp/' + query_id + '_' + (snapshot_id if snapshot_id else 'Latest') + '.json') }}"
+
+    - name: Validate required variables
+      ansible.builtin.fail:
+        msg: "Required variable {{ item }} is not defined"
+      when: vars[item] is not defined or vars[item] == ""
+      loop:
+        - network_id
+        - query_id
+        - fn_username
+        - fn_password
+
+    - name: Display query information
+      ansible.builtin.debug:
+        msg:
+          - "Running NQE Query:"
+          - " Network ID: {{ network_id }}"
+          - " Query ID: {{ query_id }}"
+          - " Snapshot ID: {{ snapshot_id if snapshot_id else 'Latest' }}"
+          - " Forward Networks URL: {{ nqe_base_url }}"
+          - " Output File: {{ output_file }}"
+          - " Proxy: {{ http_proxy }}"
+
+    - name: Test Forward Networks API connectivity
+      ansible.builtin.uri:
+        url: "{{ nqe_base_url }}"
+        method: GET
+        url_username: "{{ fn_username }}"
+        url_password: "{{ fn_password }}"
+        force_basic_auth: true
+        validate_certs: true
+        use_proxy: true
+        status_code: [200, 301, 302]
+        timeout: 30
+      environment:
+        http_proxy: "{{ http_proxy }}"
+        https_proxy: "{{ https_proxy }}"
+      register: connectivity_check
+      tags: health
+
+    - name: Display connectivity status
+      ansible.builtin.debug:
+        msg: "Forward Networks API is reachable (status: {{ connectivity_check.status }})"
+      tags: health
+
+    - name: Build NQE query URL with parameters
+      ansible.builtin.set_fact:
+        nqe_url: "{{ nqe_base_url }}/api/nqe?networkId={{ network_id }}"
+
+    - name: Add snapshot ID to URL if provided
+      ansible.builtin.set_fact:
+        nqe_url: "{{ nqe_url }}&snapshot_id={{ snapshot_id }}"
+      when: snapshot_id != ""
+
+    - name: Build NQE query request body
+      ansible.builtin.set_fact:
+        nqe_request:
+          queryId: "{{ query_id }}"
+          queryOptions:
+            limit: "{{ page_size | int }}"
+            offset: 0
+
+    - name: Execute NQE query via Forward Networks API
+      ansible.builtin.uri:
+        url: "{{ nqe_url }}"
+        method: POST
+        url_username: "{{ fn_username }}"
+        url_password: "{{ fn_password }}"
+        force_basic_auth: true
+        validate_certs: true
+        use_proxy: true
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+          Accept: "application/json"
+        status_code: [200, 400, 401, 403, 404, 500, 502]
+        timeout: 300
+      environment:
+        http_proxy: "{{ http_proxy }}"
+        https_proxy: "{{ https_proxy }}"
+      register: nqe_result
+      tags: query
+
+    - name: Handle authentication errors
+      ansible.builtin.fail:
+        msg: "Authentication failed. Check FN_API_KEY and FN_API_SECRET environment variables. (credential)"
+      when: nqe_result.status in [401, 403]
+
+    - name: Handle client errors
+      ansible.builtin.fail:
+        msg: "Client Error ({{ nqe_result.status }}): {{ nqe_result.json.error | default('Bad request - check network_id and query_id') }}"
+      when: nqe_result.status == 404
+
+    - name: Handle not found errors
+      ansible.builtin.fail:
+        msg: "Resource not found (404): Check if network_id '{{ network_id }}' and query_id '{{ query_id }}' are valid"
+      when: nqe_result.status == 404
+
+    - name: Handle server errors
+      ansible.builtin.fail:
+        msg: "Server error ({{ nqe_result.status }}): {{ nqe_result.json.error | default('Internal server error') }}"
+      when: nqe_result.status >= 500
+
+    - name: Debug response structure
+      ansible.builtin.debug:
+        var: nqe_result.json
+      when: nqe_result.status == 200
+      tags: debug
+
+    - name: Display query results summary
+      ansible.builtin.debug:
+        msg:
+          - "Query completed successfully!"
+          - "  Response Status: {{ nqe_result.status }}"
+          - "  Snapshot ID: {{ nqe_result.json.snapshotId | default('N/A') }}"
+          - "  Response keys: {{ nqe_result.json.keys() | list }}"
+          - "  Items type: {{ nqe_result.json.items | type_debug }}"
+          - "  Items returned: {{ nqe_result.json.items | length if nqe_result.json.items is sequence else 'N/A (not a sequence)' }}"
+      when: nqe_result.status == 200
+      tags: results
+
+    - name: Save results to file
+      ansible.builtin.copy:
+        content: "{{ nqe_result.json | to_nice_json }}"
+        dest: "{{ output_file }}"
+        mode: '0644'
+      when:
+        - save_results | bool
+        - nqe_result.status == 200
+      tags: save
+
+    - name: Display save location
+      ansible.builtin.debug:
+        msg: "Results saved to: {{ output_file }}"
+      when:
+        - save_results | bool
+        - nqe_result.status == 200
+      tags: save
+
+    - name: Display results content
+      ansible.builtin.debug:
+        msg:
+          - "=== NQE QUERY RESULTS ==="
+          - "{{ nqe_result.json | to_nice_json }}"
+          - "=== END RESULTS ==="
+      when: nqe_result.status == 200
+      tags: save
+
+    - name: Set facts for (AAP api) result access
+      ansible.builtin.set_fact:
+        nqe_items: "{{ nqe_result.json.items if nqe_result.json.items is sequence else [] }}"
+        nqe_snapshot_id: "{{ nqe_result.json.snapshotId | default('') }}"
+        nqe_total_items: "{{ nqe_result.json.items | length if nqe_result.json.items is sequence else 0 }}"
+      when: nqe_result.status == 200
+      tags: results
