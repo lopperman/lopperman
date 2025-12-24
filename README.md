@@ -17,7 +17,14 @@ My [VBA code](https://github.com/lopperman/just-VBA/wiki), which often includes 
 
 ---
 
-[![Paul Brower's GitHub stats](https://github-readme-stats.vercel.app/api?username=lopperman&hide_rank=true&theme=bear)](https://github.com/anuraghazra/github-readme-stats)
+<picture>
+  <source
+    srcset="https://github-readme-stats.vercel.app/api?username=lopperman&show_icons=true&theme=dark"
+    media="(prefers-color-scheme: dark)"
+  />
+  <img src="https://github-readme-stats.vercel.app/api?username=lopperman&show_icons=true" />
+</picture>
+
 
 <!---
 
