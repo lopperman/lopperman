@@ -1,0 +1,58 @@
+---
+# example_playbook.yml
+# Example showing how to use discovered credential configurations
+
+- name: Dynamic integration based on attached credentials
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    controller_validate_certs: true
+    _discover_debug: true  # Set to false in production
+
+  tasks:
+    - name: Discover credential configurations
+      ansible.builtin.include_tasks: discover_credential_configs.yml
+
+    - name: Show what we found
+      ansible.builtin.debug:
+        msg: |
+          Credentials attached: {{ credential_configs.keys() | list | join(', ') }}
+          
+          Base URLs discovered:
+          {% for cred_name, urls in (base_urls | default({})).items() %}
+          - {{ cred_name }}:
+          {% for key, value in urls.items() %}
+              {{ key }}: {{ value }}
+          {% endfor %}
+          {% endfor %}
+
+    # Example: Conditionally run tasks based on which integrations are present
+    - name: Run Cisco ISE tasks
+      ansible.builtin.debug:
+        msg: "Would call Cisco ISE at {{ base_urls[item].CISCO_BASE_URL }}"
+      loop: "{{ base_urls | default({}) | dict2items | selectattr('value.CISCO_BASE_URL', 'defined') | map(attribute='key') | list }}"
+
+    - name: Run CMDB tasks
+      ansible.builtin.debug:
+        msg: "Would call CMDB at {{ base_urls[item].CMDB_BASE_URL }}"
+      loop: "{{ base_urls | default({}) | dict2items | selectattr('value.CMDB_BASE_URL', 'defined') | map(attribute='key') | list }}"
+
+    # Example: Build a unified config object for your roles
+    - name: Build integration config
+      ansible.builtin.set_fact:
+        integration_config:
+          cisco_ise:
+            enabled: "{{ base_urls | default({}) | dict2items | selectattr('value.CISCO_BASE_URL', 'defined') | list | length > 0 }}"
+            base_url: "{{ (base_urls | default({}) | dict2items | selectattr('value.CISCO_BASE_URL', 'defined') | first | default({'value': {}})).value.CISCO_BASE_URL | default(omit) }}"
+          cmdb:
+            enabled: "{{ base_urls | default({}) | dict2items | selectattr('value.CMDB_BASE_URL', 'defined') | list | length > 0 }}"
+            base_url: "{{ (base_urls | default({}) | dict2items | selectattr('value.CMDB_BASE_URL', 'defined') | first | default({'value': {}})).value.CMDB_BASE_URL | default(omit) }}"
+          netbox:
+            enabled: "{{ base_urls | default({}) | dict2items | selectattr('value.NETBOX_BASE_URL', 'defined') | list | length > 0 }}"
+            base_url: "{{ (base_urls | default({}) | dict2items | selectattr('value.NETBOX_BASE_URL', 'defined') | first | default({'value': {}})).value.NETBOX_BASE_URL | default(omit) }}"
+
+    - name: Show integration config
+      ansible.builtin.debug:
+        var: integration_config
