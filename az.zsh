@@ -1,5 +1,7 @@
 
 # Azure CLI shortcuts
+# add to your ~/.zshrc with syntax: 
+# source ~/[az.zsh path] (e.g. `~/zcfg/az.zsh`)
 
 az-whoami() {
   echo "zsh function: ~/zcfg/az.zsh/az-whoami"
