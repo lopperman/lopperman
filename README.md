@@ -3,9 +3,9 @@
 
 ####  Paul Brower / @lopperman on GitHub [u/ITFuture](https://www.reddit.com/user/ITFuture/submitted/) on Reddit
  
-Currently working for [World Wide Technology](https://www.wwt.com/)
+Principal Engineer working for [World Wide Technology](https://www.wwt.com/), a Great Place to Work.
 
-My [VBA code](https://github.com/lopperman/just-VBA/wiki), which often includes a working demo file, is 100% MAC and PC compatible.
+This is my personal work space
 
 ---
 <p align="center">
